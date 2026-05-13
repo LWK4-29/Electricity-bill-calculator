@@ -387,6 +387,139 @@
             display: none;
         }
 
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #10b981;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 9999;
+            pointer-events: none;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* Spreadsheet Grid */
+        .sheet-wrapper {
+            position: relative;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            user-select: none;
+        }
+        .sheet-table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 420px;
+            font-size: 0.92rem;
+        }
+        .sheet-table th {
+            background: var(--glass);
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .sheet-table .date-cell {
+            padding: 0 0.75rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            background: var(--glass);
+            height: 32px;
+        }
+        .sheet-table .data-cell {
+            border: 1px solid var(--border);
+            padding: 0;
+            text-align: center;
+            height: 32px;
+            min-width: 90px;
+            cursor: cell;
+            outline: none;
+            position: relative;
+            background: transparent;
+            color: var(--text);
+        }
+        .sheet-table .data-cell.selected {
+            background: rgba(99,102,241,0.15);
+            outline: 1px solid var(--primary);
+            outline-offset: -1px;
+        }
+        .sheet-table .data-cell.anchor {
+            outline: 2px solid var(--primary);
+            outline-offset: -2px;
+        }
+        .sheet-table .data-cell.editing {
+            outline: 2px solid var(--primary);
+            outline-offset: -2px;
+            background: var(--card-bg);
+        }
+        .sheet-table .data-cell input.cell-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.92rem;
+            text-align: center;
+            outline: none;
+            padding: 0 4px;
+            font-family: inherit;
+        }
+        /* Fill handle */
+        #fillHandle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border: 1px solid white;
+            border-radius: 1px;
+            cursor: crosshair;
+            z-index: 10;
+            display: none;
+        }
+        .sheet-hint {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.6rem;
+            line-height: 1.6;
+        }
+        /* Sum row */
+        .sum-row {
+            background: linear-gradient(90deg, rgba(99,102,241,0.18), rgba(236,72,153,0.10));
+            border-top: 2px solid var(--primary);
+            font-weight: 700;
+        }
+        .sum-row .sum-label {
+            padding: 0 0.75rem;
+            font-size: 0.78rem;
+            color: var(--primary);
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            height: 36px;
+            border: 1px solid var(--border);
+        }
+        .sum-row td:not(.sum-label) {
+            text-align: center;
+            font-size: 1rem;
+            color: var(--primary);
+            border: 1px solid var(--border);
+            padding: 0 0.5rem;
+            height: 36px;
+        }
+
         @media (max-width: 600px) {
             .card {
                 padding: 1.5rem;
@@ -514,23 +647,30 @@
         <!-- Daily Log Modal/Section -->
         <div id="dailyLogSection" class="card hidden">
             <div class="section-title">每日冷氣時數記錄表</div>
-            <p class="subtitle" style="margin-bottom: 1rem;">輸入日期區間後，此處將自動產生每日填寫欄位</p>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; min-width: 400px;">
+            <div class="sheet-wrapper">
+                <div id="fillHandle"></div>
+                <table class="sheet-table" id="sheetTable">
                     <thead>
-                        <tr style="text-align: left; border-bottom: 1px solid var(--border);">
-                            <th style="padding: 0.5rem;">日期</th>
-                            <th style="padding: 0.5rem;">房間 A</th>
-                            <th style="padding: 0.5rem;">房間 B</th>
-                            <th style="padding: 0.5rem;">房間 C</th>
+                        <tr>
+                            <th>日期</th>
+                            <th>房間 A (hr)</th>
+                            <th>房間 B (hr)</th>
+                            <th>房間 C (hr)</th>
                         </tr>
                     </thead>
-                    <tbody id="dailyLogBody">
-                        <!-- Dynamic Rows -->
-                    </tbody>
+                    <tbody id="dailyLogBody"></tbody>
+                    <tfoot id="sheetFoot">
+                        <tr class="sum-row">
+                            <td class="sum-label">∑ 當期每房冷氣使用總時數</td>
+                            <td id="sumA">0</td>
+                            <td id="sumB">0</td>
+                            <td id="sumC">0</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
-            <button class="btn" onclick="syncDailyHours()" style="margin-top: 1.5rem;">同步回主表格並關閉</button>
+            <p class="sheet-hint">💡 操作提示：<b>點擊</b>選取 ・ <b>拖曳</b>選取範圍 ・ <b>Shift+點擊</b>延伸選取 ・ <b>Delete/Backspace</b> 清除 ・ <b>Ctrl+C/V</b> 複製貼上 ・ 拖曳選取框右下角<b>▪</b>向下填充</p>
+            <button class="btn" onclick="syncDailyHours()" style="margin-top: 1.5rem;">✅ 同步回主表格並關閉</button>
         </div>
 
         <div id="results" class="results">
@@ -597,6 +737,7 @@
             </div>
         </div>
     </div>
+    <div id="toast"></div>
 
     <style>
         /* Additional Styles for Tables */
@@ -740,58 +881,314 @@
         }
 
 
+        // ── Spreadsheet Engine ──────────────────────────────────────────
+        let sheetDates = [];   // ordered date strings
+        let sheetData = {};    // { dateStr: [a, b, c] }
+        let selAnchor = null, selEnd2 = null; // {r, c}
+        let isMouseDown = false, isFillDrag = false;
+        let fillStart = null;  // anchor of fill-drag selection
+        let editingCell = null;
+
         function showDailyLog() {
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
+            if (!start || !end) { alert('請先選擇計算開始與結束日期'); return; }
 
-            if (!start || !end) {
-                alert('請先選擇計算開始與結束日期');
-                return;
-            }
+            sheetDates = [];
+            const s = new Date(start), e = new Date(end);
+            for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1))
+                sheetDates.push(d.toISOString().split('T')[0]);
 
-            const startDate = new Date(start);
-            const endDate = new Date(end);
-            const logBody = document.getElementById('dailyLogBody');
-            logBody.innerHTML = '';
+            // Seed from existing dailyData
+            sheetDates.forEach(dt => {
+                sheetData[dt] = [
+                    dailyData[dt]?.a || 0,
+                    dailyData[dt]?.b || 0,
+                    dailyData[dt]?.c || 0
+                ];
+            });
 
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().split('T')[0];
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                <td style="padding: 0.5rem; color: var(--text-muted);">${dateStr}</td>
-                <td style="padding: 0.5rem;"><input type="number" class="daily-input" data-date="${dateStr}" data-room="a" value="${dailyData[dateStr]?.a || 0}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
-                <td style="padding: 0.5rem;"><input type="number" class="daily-input" data-date="${dateStr}" data-room="b" value="${dailyData[dateStr]?.b || 0}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
-                <td style="padding: 0.5rem;"><input type="number" class="daily-input" data-date="${dateStr}" data-room="c" value="${dailyData[dateStr]?.c || 0}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
-            `;
-                logBody.appendChild(row);
-            }
-
+            renderSheet();
             document.getElementById('dailyLogSection').classList.remove('hidden');
             document.getElementById('dailyLogSection').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function syncDailyHours() {
-            const inputs = document.querySelectorAll('.daily-input');
-            let sumA = 0, sumB = 0, sumC = 0;
-            dailyData = {};
+        function renderSheet() {
+            const tbody = document.getElementById('dailyLogBody');
+            tbody.innerHTML = '';
+            sheetDates.forEach((dt, r) => {
+                const tr = document.createElement('tr');
+                const dateTd = document.createElement('td');
+                dateTd.className = 'date-cell';
+                dateTd.textContent = dt;
+                tr.appendChild(dateTd);
+                for (let c = 0; c < 3; c++) {
+                    const td = document.createElement('td');
+                    td.className = 'data-cell';
+                    td.dataset.r = r; td.dataset.c = c;
+                    td.textContent = sheetData[dt][c] || 0;
+                    td.addEventListener('mousedown', onCellMouseDown);
+                    td.addEventListener('dblclick', startEdit);
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            });
+            bindSheetEvents();
+            updateSummaryRow();
+        }
 
-            inputs.forEach(input => {
-                const date = input.dataset.date;
-                const room = input.dataset.room;
-                const val = parseFloat(input.value) || 0;
+        function updateSummaryRow() {
+            let sA = 0, sB = 0, sC = 0;
+            sheetDates.forEach(dt => {
+                sA += +(sheetData[dt]?.[0] || 0);
+                sB += +(sheetData[dt]?.[1] || 0);
+                sC += +(sheetData[dt]?.[2] || 0);
+            });
+            const fmt = v => Number.isInteger(v) ? v : parseFloat(v.toFixed(1));
+            document.getElementById('sumA').textContent = fmt(sA);
+            document.getElementById('sumB').textContent = fmt(sB);
+            document.getElementById('sumC').textContent = fmt(sC);
+        }
 
-                if (!dailyData[date]) dailyData[date] = { a: 0, b: 0, c: 0 };
-                dailyData[date][room] = val;
+        function getCell(r, c) {
+            return document.querySelector(`.data-cell[data-r="${r}"][data-c="${c}"]`);
+        }
 
-                if (room === 'a') sumA += val;
-                if (room === 'b') sumB += val;
-                if (room === 'c') sumC += val;
+        function commitEdit() {
+            if (!editingCell) return;
+            const r = +editingCell.dataset.r, c = +editingCell.dataset.c;
+            const inp = editingCell.querySelector('input');
+            const val = inp ? (parseFloat(inp.value) || 0) : 0;
+            sheetData[sheetDates[r]][c] = val;
+            editingCell.textContent = val;
+            editingCell.classList.remove('editing');
+            editingCell = null;
+            updateSummaryRow();
+        }
+
+        function startEdit(e) {
+            e.preventDefault();
+            const td = e.currentTarget;
+            if (editingCell === td) return;
+            commitEdit();
+            editingCell = td;
+            const r = +td.dataset.r, c = +td.dataset.c;
+            const val = sheetData[sheetDates[r]][c];
+            td.classList.add('editing');
+            td.innerHTML = '';
+            const inp = document.createElement('input');
+            inp.className = 'cell-input';
+            inp.type = 'number';
+            inp.value = val;
+            inp.step = 0.1;
+            td.appendChild(inp);
+            inp.focus(); inp.select();
+            inp.addEventListener('keydown', onInputKey);
+            inp.addEventListener('blur', () => { commitEdit(); updateSelection(); });
+        }
+
+        function onInputKey(e) {
+            if (e.key === 'Enter') { commitEdit(); moveAnchor(1, 0); e.preventDefault(); }
+            else if (e.key === 'Tab') { commitEdit(); moveAnchor(0, e.shiftKey ? -1 : 1); e.preventDefault(); }
+            else if (e.key === 'Escape') { commitEdit(); e.preventDefault(); }
+        }
+
+        function moveAnchor(dr, dc) {
+            if (!selAnchor) return;
+            const nr = Math.min(sheetDates.length - 1, Math.max(0, selAnchor.r + dr));
+            const nc = Math.min(2, Math.max(0, selAnchor.c + dc));
+            selAnchor = {r: nr, c: nc}; selEnd2 = {r: nr, c: nc};
+            updateSelection();
+        }
+
+        function getSelRange2() {
+            if (!selAnchor) return null;
+            const se = selEnd2 || selAnchor;
+            return {
+                r1: Math.min(selAnchor.r, se.r), r2: Math.max(selAnchor.r, se.r),
+                c1: Math.min(selAnchor.c, se.c), c2: Math.max(selAnchor.c, se.c)
+            };
+        }
+
+        function updateSelection() {
+            document.querySelectorAll('.data-cell').forEach(td => {
+                td.classList.remove('selected', 'anchor');
+            });
+            const rng = getSelRange2();
+            if (!rng) return;
+            for (let r = rng.r1; r <= rng.r2; r++)
+                for (let c = rng.c1; c <= rng.c2; c++) {
+                    const td = getCell(r, c);
+                    if (td) td.classList.add('selected');
+                }
+            const anchor = getCell(selAnchor.r, selAnchor.c);
+            if (anchor) anchor.classList.add('anchor');
+            positionFillHandle();
+        }
+
+        function positionFillHandle() {
+            const rng = getSelRange2();
+            const fh = document.getElementById('fillHandle');
+            if (!rng) { fh.style.display = 'none'; return; }
+            const last = getCell(rng.r2, rng.c2);
+            if (!last) { fh.style.display = 'none'; return; }
+            const wrapper = document.querySelector('.sheet-wrapper');
+            const wRect = wrapper.getBoundingClientRect();
+            const cRect = last.getBoundingClientRect();
+            fh.style.display = 'block';
+            fh.style.left = (cRect.right - wRect.left + wrapper.scrollLeft - 5) + 'px';
+            fh.style.top  = (cRect.bottom - wRect.top  + wrapper.scrollTop  - 5) + 'px';
+        }
+
+        function onCellMouseDown(e) {
+            if (e.button !== 0) return;
+            commitEdit();
+            const td = e.currentTarget;
+            const r = +td.dataset.r, c = +td.dataset.c;
+            if (e.shiftKey && selAnchor) {
+                selEnd2 = {r, c};
+            } else {
+                selAnchor = {r, c}; selEnd2 = {r, c};
+            }
+            isMouseDown = true;
+            updateSelection();
+            e.preventDefault();
+        }
+
+        function bindSheetEvents() {
+            const tbody = document.getElementById('dailyLogBody');
+            tbody.addEventListener('mouseover', e => {
+                const td = e.target.closest('.data-cell');
+                if (!td) return;
+                if (isFillDrag && fillStart) {
+                    // During fill-drag: extend selection downward only
+                    const r = +td.dataset.r;
+                    const endR = Math.max(fillStart.r2, r);
+                    selEnd2 = {r: endR, c: fillStart.c2};
+                    selAnchor = {r: fillStart.r1, c: fillStart.c1};
+                    updateSelection();
+                } else if (isMouseDown) {
+                    selEnd2 = {r: +td.dataset.r, c: +td.dataset.c};
+                    updateSelection();
+                }
             });
 
+            const fh = document.getElementById('fillHandle');
+            fh.addEventListener('mousedown', e => {
+                e.stopPropagation(); e.preventDefault();
+                isFillDrag = true;
+                fillStart = getSelRange2();
+            });
+        }
+
+        function bindDocEvents() {
+            document.addEventListener('mouseup', () => {
+                if (isFillDrag && fillStart) {
+                    const rng = getSelRange2();
+                    for (let r = fillStart.r2 + 1; r <= rng.r2; r++) {
+                        for (let c = fillStart.c1; c <= fillStart.c2; c++) {
+                            const srcR = fillStart.r2;
+                            sheetData[sheetDates[r]][c] = sheetData[sheetDates[srcR]][c];
+                            const td = getCell(r, c);
+                            if (td) td.textContent = sheetData[sheetDates[r]][c];
+                        }
+                    }
+                    updateSummaryRow();
+                    fillStart = null;
+                }
+                isMouseDown = false; isFillDrag = false;
+            });
+
+            document.addEventListener('keydown', e => {
+                const inLog = !document.getElementById('dailyLogSection').classList.contains('hidden');
+                if (!inLog || !selAnchor || editingCell) return;
+
+                if (e.key === 'Delete' || e.key === 'Backspace') {
+                    const rng = getSelRange2();
+                    for (let r = rng.r1; r <= rng.r2; r++)
+                        for (let c = rng.c1; c <= rng.c2; c++) {
+                            sheetData[sheetDates[r]][c] = 0;
+                            const td = getCell(r, c); if (td) td.textContent = 0;
+                        }
+                    updateSummaryRow();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowDown')  { moveAnchor(1, 0);  e.preventDefault(); }
+                  else if (e.key === 'ArrowUp')    { moveAnchor(-1, 0); e.preventDefault(); }
+                  else if (e.key === 'ArrowRight')  { moveAnchor(0, 1);  e.preventDefault(); }
+                  else if (e.key === 'ArrowLeft')   { moveAnchor(0, -1); e.preventDefault(); }
+                  else if (e.key === 'Enter' && !e.shiftKey) { moveAnchor(1, 0); e.preventDefault(); }
+                  else if (e.key === 'Tab') { moveAnchor(0, e.shiftKey ? -1 : 1); e.preventDefault(); }
+                  else if (e.key === 'c' && (e.ctrlKey || e.metaKey)) { copySelection(); e.preventDefault(); }
+                  else if (e.key === 'v' && (e.ctrlKey || e.metaKey)) { pasteToSelection(e); }
+                  else if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+                      const td = getCell(selAnchor.r, selAnchor.c);
+                      if (td) { startEdit({preventDefault:()=>{},currentTarget:td}); }
+                  }
+            });
+
+            // Click outside to deselect
+            document.addEventListener('mousedown', e => {
+                const wrapper = e.target.closest('.sheet-wrapper');
+                if (!wrapper && editingCell) commitEdit();
+                if (!wrapper && !e.target.closest('.card')) {
+                    selAnchor = null; selEnd2 = null; updateSelection();
+                }
+            });
+        }
+
+        function copySelection() {
+            const rng = getSelRange2(); if (!rng) return;
+            let rows = [];
+            for (let r = rng.r1; r <= rng.r2; r++) {
+                let row = [];
+                for (let c = rng.c1; c <= rng.c2; c++)
+                    row.push(sheetData[sheetDates[r]][c]);
+                rows.push(row.join('\t'));
+            }
+            navigator.clipboard.writeText(rows.join('\n')).then(() => showToast('📋 已複製選取範圍'));
+        }
+
+        function pasteToSelection(e) {
+            e.preventDefault();
+            navigator.clipboard.readText().then(text => {
+                if (!text.trim() || !selAnchor) return;
+                const rows = text.trim().split('\n').map(r => r.split('\t'));
+                const baseR = selAnchor.r, baseC = selAnchor.c;
+                rows.forEach((cols, dr) => {
+                    cols.forEach((val, dc) => {
+                        const r = baseR + dr, c = baseC + dc;
+                        if (r < sheetDates.length && c < 3) {
+                            const v = parseFloat(val) || 0;
+                            sheetData[sheetDates[r]][c] = v;
+                            const td = getCell(r, c); if (td) td.textContent = v;
+                        }
+                    });
+                });
+                updateSummaryRow();
+                showToast('✅ 已貼上資料');
+            });
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function syncDailyHours() {
+            commitEdit();
+            let sumA = 0, sumB = 0, sumC = 0;
+            dailyData = {};
+            sheetDates.forEach(dt => {
+                const [a, b, c] = sheetData[dt] || [0, 0, 0];
+                dailyData[dt] = { a, b, c };
+                sumA += a; sumB += b; sumC += c;
+            });
             document.getElementById('hoursA').value = sumA.toFixed(1);
             document.getElementById('hoursB').value = sumB.toFixed(1);
             document.getElementById('hoursC').value = sumC.toFixed(1);
-
             document.getElementById('dailyLogSection').classList.add('hidden');
             saveData();
         }
@@ -875,7 +1272,7 @@
 
 
 
-        window.onload = loadData;
+        window.onload = () => { loadData(); bindDocEvents(); };
     </script>
 
 
