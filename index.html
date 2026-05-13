@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>租屋電費計算器 - 冷氣小時制</title>
+    <meta name="description" content="專為合租室友設計的電費計算工具，根據日立 RAS-28YH 冷氣使用小時數與台電級距公平分攤電費。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root, [data-theme="default-dark"] {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary: #ec4899;
+            --bg: #1c334c;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.05);
+            --grad-1: rgba(99, 102, 241, 0.1);
+            --grad-2: rgba(236, 72, 153, 0.1);
+        }
+
+        [data-theme="light"] {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: rgba(0, 0, 0, 0.1);
+            --glass: rgba(0, 0, 0, 0.05);
+            --grad-1: rgba(59, 130, 246, 0.15);
+            --grad-2: rgba(245, 158, 11, 0.15);
+        }
+
+        [data-theme="warm"] {
+            --primary: #ea580c;
+            --primary-hover: #c2410c;
+            --secondary: #ca8a04;
+            --bg: #fff7ed;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text: #431407;
+            --text-muted: #9a3412;
+            --border: rgba(234, 88, 12, 0.15);
+            --glass: rgba(234, 88, 12, 0.05);
+            --grad-1: rgba(234, 88, 12, 0.15);
+            --grad-2: rgba(202, 138, 4, 0.15);
+        }
+
+        [data-theme="cool"] {
+            --primary: #0ea5e9;
+            --primary-hover: #0284c7;
+            --secondary: #14b8a6;
+            --bg: #f0fdfa;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text: #083344;
+            --text-muted: #0e7490;
+            --border: rgba(14, 165, 233, 0.15);
+            --glass: rgba(14, 165, 233, 0.05);
+            --grad-1: rgba(14, 165, 233, 0.15);
+            --grad-2: rgba(20, 184, 166, 0.15);
+        }
+
+        [data-theme="forest"] {
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --secondary: #84cc16;
+            --bg: #064e3b;
+            --card-bg: rgba(6, 78, 59, 0.7);
+            --text: #f0fdf4;
+            --text-muted: #86efac;
+            --border: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.05);
+            --grad-1: rgba(16, 185, 129, 0.15);
+            --grad-2: rgba(132, 204, 22, 0.15);
+        }
+
+        [data-theme="sakura"] {
+            --primary: #f43f5e;
+            --primary-hover: #e11d48;
+            --secondary: #fb7185;
+            --bg: #fff1f2;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text: #881337;
+            --text-muted: #e11d48;
+            --border: rgba(244, 63, 94, 0.15);
+            --glass: rgba(244, 63, 94, 0.05);
+            --grad-1: rgba(244, 63, 94, 0.15);
+            --grad-2: rgba(251, 113, 133, 0.15);
+        }
+
+        [data-theme="cyberpunk"] {
+            --primary: #ff00ff;
+            --primary-hover: #dd00dd;
+            --secondary: #00ffff;
+            --bg: #000000;
+            --card-bg: rgba(20, 0, 20, 0.8);
+            --text: #ffffff;
+            --text-muted: #bbbbbb;
+            --border: rgba(255, 0, 255, 0.3);
+            --glass: rgba(0, 255, 255, 0.05);
+            --grad-1: rgba(255, 0, 255, 0.2);
+            --grad-2: rgba(0, 255, 255, 0.2);
+        }
+
+        [data-theme="coffee"] {
+            --primary: #92400e;
+            --primary-hover: #78350f;
+            --secondary: #d97706;
+            --bg: #fef3c7;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text: #451a03;
+            --text-muted: #92400e;
+            --border: rgba(146, 64, 14, 0.15);
+            --glass: rgba(146, 64, 14, 0.05);
+            --grad-1: rgba(146, 64, 14, 0.15);
+            --grad-2: rgba(217, 119, 6, 0.15);
+        }
+
+        [data-theme="obsidian"] {
+            --primary: #fbbf24;
+            --primary-hover: #f59e0b;
+            --secondary: #d97706;
+            --bg: #09090b;
+            --card-bg: rgba(24, 24, 27, 0.8);
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --border: rgba(251, 191, 36, 0.2);
+            --glass: rgba(255, 255, 255, 0.05);
+            --grad-1: rgba(251, 191, 36, 0.1);
+            --grad-2: rgba(217, 119, 6, 0.1);
+        }
+
+        [data-theme="lavender"] {
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --secondary: #c084fc;
+            --bg: #f3e8ff;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text: #3b0764;
+            --text-muted: #6b21a8;
+            --border: rgba(139, 92, 246, 0.15);
+            --glass: rgba(139, 92, 246, 0.05);
+            --grad-1: rgba(139, 92, 246, 0.15);
+            --grad-2: rgba(192, 132, 252, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(circle at 10% 20%, var(--grad-1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, var(--grad-2) 0%, transparent 40%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            width: 100%;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: var(--text);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, opacity 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .breakdown {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .info-tag {
+            display: inline-block;
+            background: var(--glass);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+
+        .specs {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .specs strong {
+            color: var(--text);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        /* Tabs for Daily Input */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--glass);
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Theme Switcher Styles */
+        .theme-switcher {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100;
+        }
+
+        .theme-switcher select {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .theme-switcher select:hover {
+            border-color: var(--primary);
+        }
+
+        .theme-switcher select option {
+            background: var(--bg);
+            color: var(--text);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="theme-switcher">
+        <select id="themeSelect" onchange="changeTheme()">
+            <option value="default-dark">🌌 午夜星空 (預設)</option>
+            <option value="light">☀️ 清新晨光</option>
+            <option value="warm">🌅 溫暖夕陽</option>
+            <option value="cool">🧊 冰川極光</option>
+            <option value="forest">🌲 靜謐森林</option>
+            <option value="sakura">🌸 春日櫻花</option>
+            <option value="cyberpunk">🤖 霓虹幻影</option>
+            <option value="coffee">☕ 香醇咖啡</option>
+            <option value="obsidian">🌑 黑曜流金</option>
+            <option value="lavender">💜 薰衣草田</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>租屋電費計算器</h1>
+            <p class="subtitle">根據室友冷氣使用時數公平分攤每一期帳單</p>
+        </header>
+
+        <div class="card">
+            <div class="section-title">帳單資訊</div>
+            <div class="grid">
+                <div class="input-group">
+                    <label for="totalAmount">該期電費總金額 (NT$)</label>
+                    <input type="number" id="totalAmount" placeholder="例如: 9207" required>
+                </div>
+                <div class="input-group">
+                    <label for="totalKwh">總使用度數 (kWh)</label>
+                    <input type="number" id="totalKwh" placeholder="例如: 1800" required>
+                </div>
+            </div>
+            <div class="grid">
+                <div class="input-group">
+                    <label for="startDate">計算開始日期</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="input-group">
+                    <label for="endDate">計算結束日期</label>
+                    <input type="date" id="endDate">
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top: 1rem;">房間資訊 (冷氣時數 & 居住人數)</div>
+            <div class="grid">
+                <div class="input-group">
+                    <label for="hoursA">房間 A 冷氣小時</label>
+                    <input type="number" id="hoursA" placeholder="例如: 646" step="0.1">
+                    <label for="peopleA" style="margin-top: 0.5rem; font-size: 0.75rem;">房間 A 人數</label>
+                    <input type="number" id="peopleA" value="1" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="hoursB">房間 B 冷氣小時</label>
+                    <input type="number" id="hoursB" placeholder="例如: 174" step="0.1">
+                    <label for="peopleB" style="margin-top: 0.5rem; font-size: 0.75rem;">房間 B 人數</label>
+                    <input type="number" id="peopleB" value="1" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="hoursC">房間 C 冷氣小時</label>
+                    <input type="number" id="hoursC" placeholder="例如: 556" step="0.1">
+                    <label for="peopleC" style="margin-top: 0.5rem; font-size: 0.75rem;">房間 C 人數</label>
+                    <input type="number" id="peopleC" value="1" min="0">
+                </div>
+            </div>
+
+            <button class="btn" onclick="calculate()">計算並產生報表</button>
+            <button class="btn" onclick="showDailyLog()"
+                style="background: var(--glass); border: 1px solid var(--primary); margin-top: 1rem;">填寫每日使用時數
+                (Log)</button>
+
+            <div class="specs">
+                <p><strong>冷氣參數設定：</strong> 日立 RAS-28YH / RAC-28YH</p>
+                <p>額定消耗功率：<strong>0.667 kW</strong> (每小時約 0.667 度)</p>
+                <p>計算邏輯：個別冷氣電費 = 使用時數 × 0.667 × 平均每度單價。公共電費 = 總金額 - 全體冷氣電費，由三人平分。</p>
+            </div>
+        </div>
+
+        <!-- Daily Log Modal/Section -->
+        <div id="dailyLogSection" class="card hidden">
+            <div class="section-title">每日冷氣時數記錄表</div>
+            <p class="subtitle" style="margin-bottom: 1rem;">輸入日期區間後，此處將自動產生每日填寫欄位</p>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 400px;">
+                    <thead>
+                        <tr style="text-align: left; border-bottom: 1px solid var(--border);">
+                            <th style="padding: 0.5rem;">日期</th>
+                            <th style="padding: 0.5rem;">房間 A</th>
+                            <th style="padding: 0.5rem;">房間 B</th>
+                            <th style="padding: 0.5rem;">房間 C</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyLogBody">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn" onclick="syncDailyHours()" style="margin-top: 1.5rem;">同步回主表格並關閉</button>
+        </div>
+
+        <div id="results" class="results">
+            <div class="card">
+                <div class="section-title">計算結果</div>
+
+                <!-- Step 1: AC Cost Table -->
+                <div style="margin-bottom: 2rem;">
+                    <label>步驟一：個別房間冷氣費</label>
+                    <div style="overflow-x: auto;">
+                        <table class="result-table">
+                            <thead>
+                                <tr>
+                                    <th>房間</th>
+                                    <th>時數 (hr)</th>
+                                    <th>度數 (kWh)</th>
+                                    <th>冷氣金額</th>
+                                </tr>
+                            </thead>
+                            <tbody id="acTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Step 2: Common Cost Calculation -->
+                <div style="margin-bottom: 2rem;">
+                    <label>步驟二：公用電費計算</label>
+                    <div class="result-card" style="display: block; background: var(--glass);">
+                        <div id="commonCalcDetails" style="font-family: monospace; line-height: 2;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Final Payment Table -->
+                <div style="margin-bottom: 2rem;">
+                    <label>步驟三：最終應付金額報表</label>
+                    <div style="overflow-x: auto;">
+                        <table class="result-table final-table">
+                            <thead>
+                                <tr>
+                                    <th>房間</th>
+                                    <th>冷氣費</th>
+                                    <th>+</th>
+                                    <th>公用分攤</th>
+                                    <th>=</th>
+                                    <th>總計金額</th>
+                                </tr>
+                            </thead>
+                            <tbody id="finalTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <p id="summaryText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"></p>
+                    <button class="btn" onclick="shareResults()"
+                        style="width: auto; padding: 0.6rem 1.5rem; font-size: 0.9rem;">複製結果給室友</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Additional Styles for Tables */
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .result-table th,
+        .result-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-table th {
+            background: var(--glass);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .final-table td:last-child {
+            color: #10b981;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .formula-operator {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+    </style>
+
+    <script>
+        const AC_POWER = 0.667; // kW
+        let dailyData = {}; // Key: date, Value: {a, b, c}
+        let commonCostVal = '';
+
+        function calculate() {
+            const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+            const totalKwh = parseFloat(document.getElementById('totalKwh').value);
+
+            const hoursA = parseFloat(document.getElementById('hoursA').value) || 0;
+            const hoursB = parseFloat(document.getElementById('hoursB').value) || 0;
+            const hoursC = parseFloat(document.getElementById('hoursC').value) || 0;
+
+            const peopleA = parseInt(document.getElementById('peopleA').value) || 0;
+            const peopleB = parseInt(document.getElementById('peopleB').value) || 0;
+            const peopleC = parseInt(document.getElementById('peopleC').value) || 0;
+            const totalPeople = peopleA + peopleB + peopleC;
+
+            if (!totalAmount || !totalKwh) {
+                alert('請輸入帳單總金額與總度數');
+                return;
+            }
+
+            if (totalPeople === 0) {
+                alert('分攤總人數不能為 0');
+                return;
+            }
+
+            const avgPricePerKwh = totalAmount / totalKwh;
+
+            // 1. AC Calculation
+            const rooms = [
+                { id: 'A', hours: hoursA, people: peopleA },
+                { id: 'B', hours: hoursB, people: peopleB },
+                { id: 'C', hours: hoursC, people: peopleC }
+            ];
+
+            let totalAcCost = 0;
+            const acTableBody = document.getElementById('acTableBody');
+            acTableBody.innerHTML = '';
+
+            rooms.forEach(room => {
+                const kwh = room.hours * AC_POWER;
+                const cost = kwh * avgPricePerKwh;
+                room.kwh = kwh;
+                room.acCost = cost;
+                totalAcCost += cost;
+
+                acTableBody.innerHTML += `
+                <tr>
+                    <td>房間 ${room.id}</td>
+                    <td>${room.hours}</td>
+                    <td>${kwh.toFixed(1)}</td>
+                    <td>NT$ ${Math.round(cost).toLocaleString()}</td>
+                </tr>
+            `;
+            });
+
+            // 2. Common Calculation
+            const remainingCost = totalAmount - totalAcCost;
+            const commonPerPerson = remainingCost / totalPeople;
+            commonCostVal = `NT$ ${Math.round(commonPerPerson).toLocaleString()}`;
+
+            document.getElementById('commonCalcDetails').innerHTML = `
+            總帳單金額：NT$ ${totalAmount.toLocaleString()}<br>
+            － 冷氣總金額：NT$ ${Math.round(totalAcCost).toLocaleString()}<br>
+            ＝ 剩餘公用費：NT$ ${Math.round(remainingCost).toLocaleString()}<br>
+            ÷ 總居住人數：${totalPeople} 人 (A:${peopleA}, B:${peopleB}, C:${peopleC})<br>
+            ＝ 每人分攤：<strong>${commonCostVal}</strong>
+        `;
+
+            // 3. Final Table
+            const finalTableBody = document.getElementById('finalTableBody');
+            finalTableBody.innerHTML = '';
+
+            rooms.forEach(room => {
+                const roomCommon = room.people * commonPerPerson;
+                const finalTotal = room.acCost + roomCommon;
+                room.finalTotal = finalTotal;
+                finalTableBody.innerHTML += `
+                <tr>
+                    <td>房間 ${room.id} (${room.people}人)</td>
+                    <td>NT$ ${Math.round(room.acCost).toLocaleString()}</td>
+                    <td class="formula-operator">+</td>
+                    <td>NT$ ${Math.round(roomCommon).toLocaleString()}</td>
+                    <td class="formula-operator">=</td>
+                    <td>NT$ ${Math.round(finalTotal).toLocaleString()}</td>
+                </tr>
+            `;
+            });
+
+
+            document.getElementById('results').style.display = 'block';
+
+            document.getElementById('summaryText').innerHTML =
+                `平均電價: NT$ ${avgPricePerKwh.toFixed(2)} / 度<br>` +
+                `冷氣總耗電: ${(rooms[0].kwh + rooms[1].kwh + rooms[2].kwh).toFixed(1)} 度<br>` +
+                `公共/生活用電: ${(totalKwh - (rooms[0].kwh + rooms[1].kwh + rooms[2].kwh)).toFixed(1)} 度`;
+
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            saveData();
+        }
+
+
+        function showDailyLog() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+
+            if (!start || !end) {
+                alert('請先選擇計算開始與結束日期');
+                return;
+            }
+
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            const logBody = document.getElementById('dailyLogBody');
+            logBody.innerHTML = '';
+
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split('T')[0];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td style="padding: 0.5rem; color: var(--text-muted);">${dateStr}</td>
+                <td style="padding: 0.5rem;"><input type="number" class="daily-input" data-date="${dateStr}" data-room="a" value="${dailyData[dateStr]?.a || 0}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
+                <td style="padding: 0.5rem;"><input type="number" class="daily-input" data-date="${dateStr}" data-room="b" value="${dailyData[dateStr]?.b || 0}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
+                <td style="padding: 0.5rem;"><input type="number" class="daily-input" data-date="${dateStr}" data-room="c" value="${dailyData[dateStr]?.c || 0}" style="padding: 0.4rem; font-size: 0.9rem;"></td>
+            `;
+                logBody.appendChild(row);
+            }
+
+            document.getElementById('dailyLogSection').classList.remove('hidden');
+            document.getElementById('dailyLogSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function syncDailyHours() {
+            const inputs = document.querySelectorAll('.daily-input');
+            let sumA = 0, sumB = 0, sumC = 0;
+            dailyData = {};
+
+            inputs.forEach(input => {
+                const date = input.dataset.date;
+                const room = input.dataset.room;
+                const val = parseFloat(input.value) || 0;
+
+                if (!dailyData[date]) dailyData[date] = { a: 0, b: 0, c: 0 };
+                dailyData[date][room] = val;
+
+                if (room === 'a') sumA += val;
+                if (room === 'b') sumB += val;
+                if (room === 'c') sumC += val;
+            });
+
+            document.getElementById('hoursA').value = sumA.toFixed(1);
+            document.getElementById('hoursB').value = sumB.toFixed(1);
+            document.getElementById('hoursC').value = sumC.toFixed(1);
+
+            document.getElementById('dailyLogSection').classList.add('hidden');
+            saveData();
+        }
+
+        function shareResults() {
+            const rows = document.querySelectorAll('#finalTableBody tr');
+            if (rows.length === 0) return;
+
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const commonText = document.querySelector('#commonCalcDetails b')?.textContent || '計算中';
+
+            let text = `⚡️ 本期電費計算結果 (${start || '未設定'} ~ ${end || '未設定'})\n`;
+            text += `----------------------\n`;
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const roomName = cells[0].textContent;
+                const acCost = cells[1].textContent;
+                const commonCost = cells[3].textContent;
+                const total = cells[5].textContent;
+                text += `🏠 ${roomName}：${total} (${acCost} + 公用 ${commonCost})\n`;
+            });
+
+            text += `----------------------\n`;
+            text += `💡 每個房間公用分攤：${commonCostVal || '計算中'}\n`;
+            text += `（依冷氣型號 RAS-28YH 使用小時數計算）`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('結果已複製到剪貼簿，可以直接貼給室友！');
+            });
+        }
+
+
+        function changeTheme() {
+            const theme = document.getElementById('themeSelect').value;
+            document.documentElement.setAttribute('data-theme', theme);
+            saveData();
+        }
+
+        function saveData() {
+            const data = {
+                totalAmount: document.getElementById('totalAmount').value,
+                totalKwh: document.getElementById('totalKwh').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                hoursA: document.getElementById('hoursA').value,
+                hoursB: document.getElementById('hoursB').value,
+                hoursC: document.getElementById('hoursC').value,
+                peopleA: document.getElementById('peopleA').value,
+                peopleB: document.getElementById('peopleB').value,
+                peopleC: document.getElementById('peopleC').value,
+                dailyData: dailyData,
+                theme: document.getElementById('themeSelect').value
+            };
+            localStorage.setItem('electricityData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('electricityData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('totalAmount').value = data.totalAmount || '';
+                document.getElementById('totalKwh').value = data.totalKwh || '';
+                document.getElementById('startDate').value = data.startDate || '';
+                document.getElementById('endDate').value = data.endDate || '';
+                document.getElementById('hoursA').value = data.hoursA || '';
+                document.getElementById('hoursB').value = data.hoursB || '';
+                document.getElementById('hoursC').value = data.hoursC || '';
+                document.getElementById('peopleA').value = data.peopleA || '1';
+                document.getElementById('peopleB').value = data.peopleB || '1';
+                document.getElementById('peopleC').value = data.peopleC || '1';
+                dailyData = data.dailyData || {};
+                
+                if (data.theme) {
+                    document.getElementById('themeSelect').value = data.theme;
+                    document.documentElement.setAttribute('data-theme', data.theme);
+                }
+            }
+        }
+
+
+
+        window.onload = loadData;
+    </script>
+
+
+</body>
+
+</html>
